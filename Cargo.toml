@@ -5,7 +5,7 @@ edition = "2018"
 build = 'build.rs'
 authors = ['hjiayz <hjiayz@163.com>']
 license = 'MIT OR Apache-2.0'
-description = 'cpp std::regex'
+description = 'quickjs libregexp'
 repository = 'https://github.com/hjiayz/quickjs_regex.git'
 
 [dependencies]

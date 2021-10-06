@@ -7,8 +7,8 @@
 #include "cutils.h"
 #include "cutils.c"
 
-#include "quickjs/libregexp.h"
-#include "quickjs/libregexp.c"
+#include "libregexp.h"
+#include "libregexp.c"
 
 void *lre_realloc(void *opaque, void *ptr, size_t size)
 {
