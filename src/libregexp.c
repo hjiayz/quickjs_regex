@@ -1872,10 +1872,10 @@ uint8_t *lre_compile(int *plen, char *error_msg, int error_msg_size,
     
     re_emit_op(s, REOP_match);
 
-    if (*s->buf_ptr != '\0') {
-        re_parse_error(s, "extraneous characters at the end");
-        goto error;
-    }
+    //if (*s->buf_ptr != '\0') {
+        //re_parse_error(s, "extraneous characters at the end");
+        //goto error;
+    //}
 
     if (dbuf_error(&s->byte_code)) {
         re_parse_out_of_memory(s);
