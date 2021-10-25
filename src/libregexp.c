@@ -1921,12 +1921,12 @@ static BOOL is_word_char(uint32_t c)
             (c == '_'));
 }
 
-int unicode_from_utf8_peek(const uint8_t *p, int max_len){
-    uint8_t *pp=p;
+inline int unicode_from_utf8_peek(const uint8_t *p, int max_len){
+    const uint8_t *pp=p;
     return unicode_from_utf8(p,max_len,&pp);
 }
 
-void utf8_prev_char (const uint8_t **p)
+inline void utf8_prev_char (const uint8_t **p)
 {
   while (1)
     {
@@ -1936,10 +1936,10 @@ void utf8_prev_char (const uint8_t **p)
     }
 }
 
-int unicode_from_utf8_prev_peek(const uint8_t *p, int max_len){
-    uint8_t *pp=p;
+inline int unicode_from_utf8_prev_peek(const uint8_t *p, int max_len){
+    const uint8_t *pp=p;
     utf8_prev_char(&pp);
-    return unicode_from_utf8(pp,max_len,&pp);
+    return unicode_from_utf8_peek(pp,max_len);
 }
 
 
@@ -1982,7 +1982,7 @@ int unicode_from_utf8_prev_peek(const uint8_t *p, int max_len){
 #define PEEK_PREV_CHAR(c, cptr, cbuf_start)                 \
     do {                                         \
         if (cbuf_type == 0) {                    \
-            unicode_from_utf8_prev_peek(cptr,UTF8_CHAR_LEN_MAX);                        \
+            c = unicode_from_utf8_prev_peek(cptr,UTF8_CHAR_LEN_MAX);                        \
         } else {                                 \
             uint32_t __c1;                                              \
             c = ((uint16_t *)cptr)[-1];                                 \
