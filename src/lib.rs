@@ -143,22 +143,109 @@ impl Regex {
         self.exec_inner(s, 0).map(|cap| cap_to_str(s, &cap))
     }
 
+    pub fn matchn<'a>(&self, s: &'a str, n: usize) -> Result<Vec<Vec<&'a str>>, ExecError> {
+        let mut groups = Vec::new();
+        let mut cindex = 0isize;
+        for _ in 1..=n {
+            let cap = match self.exec_inner(s, cindex) {
+                Err(ExecError::NotMatch) => break,
+                Err(ExecError::Error) => return Err(ExecError::Error),
+                Ok(cap) => cap,
+            };
+            let matchgroups = cap_to_str(s, &cap);
+            cindex = cap[1] as isize - (s.as_ptr() as isize);
+            groups.push(matchgroups);
+        }
+        Ok(groups)
+    }
+
+    pub fn match_all<'a>(&self, s: &'a str) -> Result<Vec<Vec<&'a str>>, ExecError> {
+        let mut groups = Vec::new();
+        let mut cindex = 0isize;
+        loop {
+            let cap = match self.exec_inner(s, cindex) {
+                Err(ExecError::NotMatch) => break,
+                Err(ExecError::Error) => return Err(ExecError::Error),
+                Ok(cap) => cap,
+            };
+            let matchgroups = cap_to_str(s, &cap);
+            cindex = cap[1] as isize - (s.as_ptr() as isize);
+            groups.push(matchgroups);
+        }
+        Ok(groups)
+    }
+
     pub fn replace<'a, F>(&self, s: &'a str, f: F) -> Result<String, ExecError>
     where
         F: Fn(&[&'a str]) -> String,
     {
-        let cap = self.exec_inner(s, 0)?;
-        let matchgroups = cap_to_str(s, &cap);
-        let rep = f(&matchgroups);
-        let start_len = cap[0] - (s.as_ptr() as usize);
-        let start = unsafe {
-            std::str::from_utf8_unchecked(std::slice::from_raw_parts(s.as_ptr(), start_len))
-        };
-        let end_len = (s.as_ptr() as usize) + s.len() - cap[1];
-        let end = unsafe {
-            std::str::from_utf8_unchecked(std::slice::from_raw_parts(cap[1] as *const u8, end_len))
-        };
-        Ok(format!("{}{}{}", start, rep, end))
+        self.replacen(s, f, 1)
+    }
+
+    pub fn replace_all<'a, F>(&self, s: &'a str, f: F) -> Result<String, ExecError>
+    where
+        F: Fn(&[&'a str]) -> String,
+    {
+        use std::borrow::Cow;
+        let mut slice = Vec::new();
+        let mut cindex = 0isize;
+        loop {
+            let cap = match self.exec_inner(s, cindex) {
+                Err(ExecError::NotMatch) => break,
+                Err(ExecError::Error) => return Err(ExecError::Error),
+                Ok(cap) => cap,
+            };
+            let start_ptr = unsafe { s.as_ptr().offset(cindex) };
+            let start_len = cap[0] - (start_ptr as usize);
+            let start = unsafe {
+                std::str::from_utf8_unchecked(std::slice::from_raw_parts(start_ptr, start_len))
+            };
+            let matchgroups = cap_to_str(s, &cap);
+            let rep = f(&matchgroups);
+            slice.push(Cow::Borrowed(start));
+            slice.push(Cow::Owned(rep));
+            cindex = cap[1] as isize - (s.as_ptr() as isize);
+        }
+
+        let end_len = s.len() - (cindex as usize);
+        let end_ptr = unsafe { s.as_ptr().offset(cindex) };
+        let end =
+            unsafe { std::str::from_utf8_unchecked(std::slice::from_raw_parts(end_ptr, end_len)) };
+        slice.push(Cow::Borrowed(end));
+        Ok(slice.join(""))
+    }
+
+    pub fn replacen<'a, F>(&self, s: &'a str, f: F, n: usize) -> Result<String, ExecError>
+    where
+        F: Fn(&[&'a str]) -> String,
+    {
+        use std::borrow::Cow;
+        let mut slice = Vec::new();
+        let mut cindex = 0isize;
+        for _ in 1..=n {
+            let cap = match self.exec_inner(s, cindex) {
+                Err(ExecError::NotMatch) => break,
+                Err(ExecError::Error) => return Err(ExecError::Error),
+                Ok(cap) => cap,
+            };
+            let start_ptr = unsafe { s.as_ptr().offset(cindex) };
+            let start_len = cap[0] - (start_ptr as usize);
+            let start = unsafe {
+                std::str::from_utf8_unchecked(std::slice::from_raw_parts(start_ptr, start_len))
+            };
+            let matchgroups = cap_to_str(s, &cap);
+            let rep = f(&matchgroups);
+            slice.push(Cow::Borrowed(start));
+            slice.push(Cow::Owned(rep));
+            cindex = cap[1] as isize - (s.as_ptr() as isize);
+        }
+
+        let end_len = s.len() - (cindex as usize);
+        let end_ptr = unsafe { s.as_ptr().offset(cindex) };
+        let end =
+            unsafe { std::str::from_utf8_unchecked(std::slice::from_raw_parts(end_ptr, end_len)) };
+        slice.push(Cow::Borrowed(end));
+        Ok(slice.join(""))
     }
 }
 
@@ -183,4 +270,15 @@ fn test_regex() {
         .replace(&text, |m| format!("x{}{}{}", m[1], m[2], m[3]))
         .unwrap();
     assert!(result == "123x123123");
+    let regex = Regex::complie("(\\d)", UNICODE).unwrap();
+    let result = regex
+        .replacen("12345", |m| format!("x{}", m[1]), 2)
+        .unwrap();
+    assert!(result == "x1x2345");
+    let result = regex
+        .replace_all("12345", |m| format!("x{}", m[1]))
+        .unwrap();
+    assert!(result == "x1x2x3x4x5");
+    let result = regex.match_all("12345").unwrap();
+    assert!(result == [["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"]]);
 }
