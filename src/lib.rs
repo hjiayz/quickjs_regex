@@ -139,11 +139,11 @@ impl Regex {
         }
     }
 
-    pub fn exec<'a>(&self, s: &'a str) -> Result<Vec<&'a str>, ExecError> {
+    pub fn try_match<'a>(&self, s: &'a str) -> Result<Vec<&'a str>, ExecError> {
         self.exec_inner(s, 0).map(|cap| cap_to_str(s, &cap))
     }
 
-    pub fn matchn<'a>(&self, s: &'a str, n: usize) -> Result<Vec<Vec<&'a str>>, ExecError> {
+    pub fn try_matchn<'a>(&self, s: &'a str, n: usize) -> Result<Vec<Vec<&'a str>>, ExecError> {
         let mut groups = Vec::new();
         let mut cindex = 0isize;
         for _ in 1..=n {
@@ -159,63 +159,25 @@ impl Regex {
         Ok(groups)
     }
 
-    pub fn match_all<'a>(&self, s: &'a str) -> Result<Vec<Vec<&'a str>>, ExecError> {
-        let mut groups = Vec::new();
-        let mut cindex = 0isize;
-        loop {
-            let cap = match self.exec_inner(s, cindex) {
-                Err(ExecError::NotMatch) => break,
-                Err(ExecError::Error) => return Err(ExecError::Error),
-                Ok(cap) => cap,
-            };
-            let matchgroups = cap_to_str(s, &cap);
-            cindex = cap[1] as isize - (s.as_ptr() as isize);
-            groups.push(matchgroups);
-        }
-        Ok(groups)
+    pub fn try_match_all<'a>(&self, s: &'a str) -> Result<Vec<Vec<&'a str>>, ExecError> {
+        self.try_matchn(s, std::usize::MAX)
     }
 
-    pub fn replace<'a, F>(&self, s: &'a str, f: F) -> Result<String, ExecError>
+    pub fn try_replace<'a, F>(&self, s: &'a str, f: F) -> Result<String, ExecError>
     where
         F: Fn(&[&'a str]) -> String,
     {
-        self.replacen(s, f, 1)
+        self.try_replacen(s, f, 1)
     }
 
-    pub fn replace_all<'a, F>(&self, s: &'a str, f: F) -> Result<String, ExecError>
+    pub fn try_replace_all<'a, F>(&self, s: &'a str, f: F) -> Result<String, ExecError>
     where
         F: Fn(&[&'a str]) -> String,
     {
-        use std::borrow::Cow;
-        let mut slice = Vec::new();
-        let mut cindex = 0isize;
-        loop {
-            let cap = match self.exec_inner(s, cindex) {
-                Err(ExecError::NotMatch) => break,
-                Err(ExecError::Error) => return Err(ExecError::Error),
-                Ok(cap) => cap,
-            };
-            let start_ptr = unsafe { s.as_ptr().offset(cindex) };
-            let start_len = cap[0] - (start_ptr as usize);
-            let start = unsafe {
-                std::str::from_utf8_unchecked(std::slice::from_raw_parts(start_ptr, start_len))
-            };
-            let matchgroups = cap_to_str(s, &cap);
-            let rep = f(&matchgroups);
-            slice.push(Cow::Borrowed(start));
-            slice.push(Cow::Owned(rep));
-            cindex = cap[1] as isize - (s.as_ptr() as isize);
-        }
-
-        let end_len = s.len() - (cindex as usize);
-        let end_ptr = unsafe { s.as_ptr().offset(cindex) };
-        let end =
-            unsafe { std::str::from_utf8_unchecked(std::slice::from_raw_parts(end_ptr, end_len)) };
-        slice.push(Cow::Borrowed(end));
-        Ok(slice.join(""))
+        self.try_replacen(s, f, std::usize::MAX)
     }
 
-    pub fn replacen<'a, F>(&self, s: &'a str, f: F, n: usize) -> Result<String, ExecError>
+    pub fn try_replacen<'a, F>(&self, s: &'a str, f: F, n: usize) -> Result<String, ExecError>
     where
         F: Fn(&[&'a str]) -> String,
     {
@@ -254,31 +216,31 @@ fn test_regex() {
     let reg = "(Α)123456".repeat(1);
     let text = "α123456".repeat(1000);
     let regex = Regex::complie(&reg, IGNORECASE | UNICODE).unwrap();
-    let result = regex.exec(&text).unwrap();
+    let result = regex.try_match(&text).unwrap();
     assert!(result.len() == 2);
 
     let reg = "/(\0)123456".repeat(1);
     let text = "/\0123456".repeat(1000);
     let regex = Regex::complie(&reg, IGNORECASE | UNICODE).unwrap();
-    let result = regex.exec(&text).unwrap();
+    let result = regex.try_match(&text).unwrap();
     assert!(result.len() == 2);
 
     let reg = "(1)(2)(3)456".repeat(1);
     let text = "123123456123";
     let regex = Regex::complie(&reg, IGNORECASE | UNICODE).unwrap();
     let result = regex
-        .replace(&text, |m| format!("x{}{}{}", m[1], m[2], m[3]))
+        .try_replace(&text, |m| format!("x{}{}{}", m[1], m[2], m[3]))
         .unwrap();
     assert!(result == "123x123123");
     let regex = Regex::complie("(\\d)", UNICODE).unwrap();
     let result = regex
-        .replacen("12345", |m| format!("x{}", m[1]), 2)
+        .try_replacen("12345", |m| format!("x{}", m[1]), 2)
         .unwrap();
     assert!(result == "x1x2345");
     let result = regex
-        .replace_all("12345", |m| format!("x{}", m[1]))
+        .try_replace_all("12345", |m| format!("x{}", m[1]))
         .unwrap();
     assert!(result == "x1x2x3x4x5");
-    let result = regex.match_all("12345").unwrap();
+    let result = regex.try_match_all("12345").unwrap();
     assert!(result == [["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"]]);
 }
