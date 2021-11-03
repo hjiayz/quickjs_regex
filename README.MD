@@ -2,7 +2,10 @@
 
 quickjs libregexp
 ## windows
+
 install clang
+```
 set CC=clang
+```
 
 License: MIT OR Apache-2.0
