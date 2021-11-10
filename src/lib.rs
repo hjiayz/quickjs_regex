@@ -1,7 +1,7 @@
 //! quickjs libregexp
 //! # windows
 //! install clang
-//! ```
+//! ```sh
 //! set CC=clang
 //! ```
 
@@ -87,7 +87,7 @@ fn cap_to_str<'a>(_s: &'a str, cap: &[usize]) -> Vec<&'a str> {
 }
 
 impl Regex {
-    pub fn complie(pattern: &str, flag: Flag) -> Result<Regex, ComplieError> {
+    pub fn compile(pattern: &str, flag: Flag) -> Result<Regex, ComplieError> {
         if flag.0 & UNICODE.0 == 0 {
             return Err(ComplieError::NotUnicode);
         }
@@ -217,24 +217,24 @@ impl Regex {
 fn test_regex() {
     let reg = "(Α)123456".repeat(1);
     let text = "α123456".repeat(1000);
-    let regex = Regex::complie(&reg, IGNORECASE | UNICODE).unwrap();
+    let regex = Regex::compile(&reg, IGNORECASE | UNICODE).unwrap();
     let result = regex.try_match(&text).unwrap();
     assert!(result.len() == 2);
 
     let reg = "/(\0)123456".repeat(1);
     let text = "/\0123456".repeat(1000);
-    let regex = Regex::complie(&reg, IGNORECASE | UNICODE).unwrap();
+    let regex = Regex::compile(&reg, IGNORECASE | UNICODE).unwrap();
     let result = regex.try_match(&text).unwrap();
     assert!(result.len() == 2);
 
     let reg = "(1)(2)(3)456".repeat(1);
     let text = "123123456123";
-    let regex = Regex::complie(&reg, IGNORECASE | UNICODE).unwrap();
+    let regex = Regex::compile(&reg, IGNORECASE | UNICODE).unwrap();
     let result = regex
         .try_replace(&text, |m| format!("x{}{}{}", m[1], m[2], m[3]))
         .unwrap();
     assert!(result == "123x123123");
-    let regex = Regex::complie("(\\d)", UNICODE).unwrap();
+    let regex = Regex::compile("(\\d)", UNICODE).unwrap();
     let result = regex
         .try_replacen("12345", |m| format!("x{}", m[1]), 2)
         .unwrap();

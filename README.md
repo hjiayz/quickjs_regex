@@ -3,7 +3,7 @@
 quickjs libregexp
 ## windows
 install clang
-```rust
+```sh
 set CC=clang
 ```
 

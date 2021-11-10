@@ -1,6 +1,6 @@
 [package]
 name = "quickjs_regex"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2018"
 build = 'build.rs'
 authors = ['hjiayz <hjiayz@163.com>']
