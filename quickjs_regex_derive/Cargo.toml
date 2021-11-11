@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 syn = {version = "1.0.81", features = ["full"] }
 quote = "1.0"
-quickjs_regex = { path = '../' }
+quickjs_regex = "0.2.1"
 proc-macro2 = "1.0.32"
 
 [lib]
