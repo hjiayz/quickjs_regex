@@ -2,6 +2,10 @@
 name = "quickjs_regex_derive"
 version = "0.1.0"
 edition = "2021"
+authors = ['hjiayz <hjiayz@163.com>']
+license = 'MIT OR Apache-2.0'
+description = 'quickjs libregexp'
+repository = 'https://github.com/hjiayz/quickjs_regex.git'
 
 [dependencies]
 syn = {version = "1.0.81", features = ["full"] }
