@@ -9,6 +9,7 @@ use std::convert::TryInto;
 use std::ffi::c_void;
 use std::ffi::CStr;
 use std::os::raw::c_char;
+use std::borrow::Cow;
 
 extern "C" {
     fn lre_compile(
@@ -52,7 +53,7 @@ impl std::ops::BitOr for Flag {
 
 #[derive(Debug)]
 pub struct Regex {
-    code: Vec<u8>,
+    code: Cow<'static,[u8]>,
     count: usize,
 }
 
@@ -115,9 +116,24 @@ impl Regex {
         let byte_code_len = byte_code_len
             .try_into()
             .map_err(|_| ComplieError::ByteCodeLenIsNeg)?;
-        let code = unsafe { Vec::from_raw_parts(byte_code_ptr, byte_code_len, byte_code_len) };
+        let code:Cow<'static,[u8]> = Cow::Owned(unsafe { Vec::from_raw_parts(byte_code_ptr, byte_code_len, byte_code_len) });
         let count = unsafe { lre_get_capture_count(code.as_ptr() as *const _) as usize };
         Ok(Regex { code, count })
+    }
+
+    pub fn byte_code(&self)->Vec<u8> {
+        self.code.to_vec()
+    }
+
+    pub fn capture_count(&self)->usize {
+        self.count
+    }
+
+    pub const fn from_static(byte_code:&'static [u8],capture_count:usize)->Regex {
+        Regex{
+            code: Cow::Borrowed(byte_code),
+            count: capture_count,
+        }
     }
 
     fn exec_inner(&self, s: &str, cindex: isize) -> Result<Vec<usize>, ExecError> {
@@ -139,6 +155,10 @@ impl Regex {
             0 => Err(ExecError::NotMatch),
             _ => Err(ExecError::Error),
         }
+    }
+
+    pub fn test(&self, s: &str) -> bool {
+        self.exec_inner(s, 0).is_ok()
     }
 
     pub fn try_match<'a>(&self, s: &'a str) -> Result<Vec<&'a str>, ExecError> {
@@ -183,7 +203,6 @@ impl Regex {
     where
         F: Fn(&[&'a str]) -> String,
     {
-        use std::borrow::Cow;
         let mut slice = Vec::new();
         let mut cindex = 0isize;
         for _ in 1..=n {

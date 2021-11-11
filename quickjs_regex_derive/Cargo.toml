@@ -1,0 +1,13 @@
+[package]
+name = "quickjs_regex_derive"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+syn = {version = "1.0.81", features = ["full"] }
+quote = "1.0"
+quickjs_regex = { path = '../' }
+proc-macro2 = "1.0.32"
+
+[lib]
+proc-macro = true

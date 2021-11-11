@@ -12,3 +12,6 @@ repository = 'https://github.com/hjiayz/quickjs_regex.git'
 
 [build-dependencies]
 cc = { version = "1.0", features = ["parallel"] }
+
+[workspace]
+members = [ "quickjs_regex_derive" ]
