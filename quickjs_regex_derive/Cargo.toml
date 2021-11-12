@@ -1,6 +1,6 @@
 [package]
 name = "quickjs_regex_derive"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ['hjiayz <hjiayz@163.com>']
 license = 'MIT OR Apache-2.0'
@@ -10,7 +10,7 @@ repository = 'https://github.com/hjiayz/quickjs_regex.git'
 [dependencies]
 syn = {version = "1.0.81", features = ["full"] }
 quote = "1.0"
-quickjs_regex = "0.2.1"
+quickjs_regex = "0.2.2"
 proc-macro2 = "1.0.32"
 
 [lib]
