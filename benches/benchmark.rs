@@ -27,7 +27,7 @@ fn regex_test(c: &mut Criterion) {
 
 fn quickjs_regex_test(c: &mut Criterion) {
     c.bench_function("quickjs_regex_test", |b| {
-        b.iter(|| uregex!(r"^bc(d|e)*$").test(black_box(TEXT)))
+        b.iter(|| regex!(r"^bc(d|e)*$").test(black_box(TEXT)))
     });
 }
 
