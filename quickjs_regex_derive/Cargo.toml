@@ -1,6 +1,6 @@
 [package]
 name = "quickjs_regex_derive"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ['hjiayz <hjiayz@163.com>']
 license = 'MIT OR Apache-2.0'
