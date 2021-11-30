@@ -1,6 +1,8 @@
 {
     "files.associations": {
-        "stddef.h": "c"
+        "*.proto": "proto3",
+        "stddef.h": "c",
+        "libregexp-opcode.h": "c"
     }
     
 }

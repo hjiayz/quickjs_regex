@@ -1,0 +1,14 @@
+[package]
+name = "quickjs_regex_backend"
+version = "0.1.0"
+edition = "2021"
+build = 'build.rs'
+authors = ['hjiayz <hjiayz@163.com>']
+license = 'MIT OR Apache-2.0'
+description = 'quickjs libregexp'
+repository = 'https://github.com/hjiayz/quickjs_regex.git'
+
+[dependencies]
+
+[build-dependencies]
+cc = { version = "1.0", features = ["parallel"] }

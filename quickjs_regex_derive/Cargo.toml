@@ -8,19 +8,11 @@ description = 'quickjs libregexp'
 repository = 'https://github.com/hjiayz/quickjs_regex.git'
 
 [dependencies]
-syn = {version = "1.0.81", features = ["full"] }
+syn = { version = "1.0.81", features = ["full"] }
 quote = "1.0"
-quickjs_regex = "0.2.2"
+quickjs_regex_backend = { path = "../quickjs_regex_backend" }
 proc-macro2 = "1.0.32"
-
-[dev-dependencies]
-criterion = "0.3"
-regex = "1.5.4"
-regex-syntax = "0.6.25"
-
-[[bench]]
-name = "benchmark"
-harness = false
+proc-macro-crate = "1.1.0"
 
 [lib]
 proc-macro = true

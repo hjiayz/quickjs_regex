@@ -1,17 +1,24 @@
 [package]
 name = "quickjs_regex"
-version = "0.2.2"
-edition = "2018"
-build = 'build.rs'
+version = "0.2.3"
+edition = "2021"
 authors = ['hjiayz <hjiayz@163.com>']
 license = 'MIT OR Apache-2.0'
 description = 'quickjs libregexp'
 repository = 'https://github.com/hjiayz/quickjs_regex.git'
 
 [dependencies]
+quickjs_regex_backend = {path = "quickjs_regex_backend"}
+quickjs_regex_derive = {path = "quickjs_regex_derive"}
 
-[build-dependencies]
-cc = { version = "1.0", features = ["parallel"] }
+[dev-dependencies]
+criterion = "0.3"
+regex = "1.5.4"
+regex-syntax = "0.6.25"
+
+[[bench]]
+name = "benchmark"
+harness = false
 
 [workspace]
-members = [ "quickjs_regex_derive" ]
+members = [ "quickjs_regex_derive" ,"quickjs_regex_backend"]

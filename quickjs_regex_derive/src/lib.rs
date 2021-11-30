@@ -1,31 +1,54 @@
 use proc_macro::TokenStream;
-use quickjs_regex::{Regex, UNICODE};
+use proc_macro2::Span;
+use quickjs_regex_backend::*;
 use quote::quote;
-use syn::token::Bracket;
-use syn::{Expr, ExprArray, ExprLit};
-use syn::__private::Span;
-use syn::{punctuated::Punctuated, parse_macro_input, token::Comma,Lit, LitInt, LitStr};
+use syn::{parse_macro_input, punctuated::Punctuated, token::Comma, Ident, LitStr};
 
 #[proc_macro]
 pub fn uregex(input: TokenStream) -> TokenStream {
     let s = parse_macro_input!(input as LitStr);
-    let regex = Regex::compile(&s.value(), UNICODE).unwrap();
+    gen(&s.value(), UNICODE)
+}
 
-    let elems : Punctuated<Expr, Comma> = regex.byte_code().into_iter().map(|byte|{
-        Expr::Lit(ExprLit{attrs:Default::default(),lit:Lit::Int(LitInt::new(&byte.to_string(),Span::call_site()))})
-    }).collect();
+#[proc_macro]
+pub fn regex(input: TokenStream) -> TokenStream {
+    let params: Punctuated<LitStr, Comma> =
+        parse_macro_input!(input with Punctuated::parse_terminated);
+    let mut iter = params.iter();
+    let regex = iter.next().expect("missing regexp.").value();
+    let param = iter.next().map(|param| param.value()).unwrap_or_default();
+    let mut flag = NAMED_GROUPS;
+    for ch in param.chars().next() {
+        match ch {
+            'y' => flag = flag | STICKY,
+            'g' => flag = flag | GLOBAL,
+            'u' => flag = flag | UNICODE,
+            'i' => flag = flag | IGNORECASE,
+            'm' => flag = flag | MULTILINE,
+            _ => (),
+        }
+    }
+    gen(&regex, flag)
+}
 
-    let byte_code = ExprArray{
-        attrs:vec![],
-        bracket_token:Bracket::default(),
-        elems:elems,
+fn gen(regex: &str, flag: Flag) -> TokenStream {
+    use proc_macro_crate::*;
+    let found_crate = crate_name("quickjs_regex").unwrap();
+    let crate_name = match found_crate {
+        FoundCrate::Itself => quote!(crate),
+        FoundCrate::Name(name) => {
+            let ident = Ident::new(&name, Span::call_site());
+            quote!( #ident )
+        }
     };
+    let regex = Regex::compile(regex, flag).unwrap();
+    let byte_code = regex.byte_code();
 
-    let capture_count = LitInt::new(&format!("{}", regex.capture_count()), Span::call_site());
+    let capture_count = regex.capture_count();
     let expanded = quote! {
         {
-            use quickjs_regex::Regex;
-            Regex::from_static(&#byte_code,#capture_count)
+            use #crate_name::Regex;
+            Regex::from_static(&[#(#byte_code),*],#capture_count)
         }
     };
     TokenStream::from(expanded)
